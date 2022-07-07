@@ -8,7 +8,6 @@ const {
 
    // Database Configuration
    DATABASE,
-   RETRY_WRITES,
    DATABASE_TEST,
    DATABASE_PASSWORD,
 
@@ -26,7 +25,6 @@ const {
 export default {
    port: PORT,
    database: NODE_ENV === 'dev' ? DATABASE : DATABASE_TEST,
-   retryWrites: RETRY_WRITES,
    databasePassword: DATABASE_PASSWORD,
    jwtSecret: JWT_SECRET,
    jwtExpiresIn: JWT_EXPIRES_IN,
