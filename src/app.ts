@@ -29,6 +29,7 @@ mongoConnect();
 /**
  * Middlewares
  */
+app.use(express.json());
 
 /**
  * Routes
