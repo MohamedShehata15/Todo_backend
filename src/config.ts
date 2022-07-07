@@ -23,6 +23,7 @@ const {
 } = process.env;
 
 export default {
+   env: NODE_ENV,
    port: PORT,
    database: NODE_ENV === 'dev' ? DATABASE : DATABASE_TEST,
    databasePassword: DATABASE_PASSWORD,
