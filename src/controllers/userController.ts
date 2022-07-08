@@ -3,17 +3,16 @@ import jwt from 'jsonwebtoken';
 import { Types } from 'mongoose';
 import { Request, Response, NextFunction } from 'express';
 
-import User from '../models/User';
+import User, { UserDocument } from '../models/User';
 import catchAsync from '../utils/catchAsync';
 import { AppError } from '../utils/appError';
 import config from '../config';
-import UserTypes from '../types/user.types';
 import CookieOptionsTypes from './../types/cookieOptions.types';
 
 class UserController {
    signUp = catchAsync(
       async (req: Request, res: Response, _next: NextFunction) => {
-         const newUser = await User.create({
+         const newUser: UserDocument = await User.create({
             name: req.body.name,
             email: req.body.email,
             password: req.body.password,
@@ -24,8 +23,39 @@ class UserController {
       }
    );
 
+   login = catchAsync(
+      async (req: Request, res: Response, next: NextFunction) => {
+         const { email, password } = req.body;
+
+         if (!email || !password)
+            return next(new AppError('Please enter email and password!', 400));
+
+         const user: UserDocument | null = await User.findOne({
+            email
+         }).select('+password');
+
+         const userPassword: string = user?.password ?? '';
+
+         console.log('########################################');
+         console.log(user);
+         console.log('###########################################');
+
+         if (!user)
+            return next(new AppError('Incorrect email or password', 401));
+
+         const correct =
+            user?.correctPassword &&
+            (await user?.correctPassword(password, userPassword));
+
+         if (!correct)
+            return next(new AppError('Incorrect email or password', 401));
+
+         this.createSendToken(user, 200, res);
+      }
+   );
+
    private createSendToken = (
-      user: UserTypes,
+      user: UserDocument,
       statusCode: number,
       res: Response
    ) => {
@@ -44,14 +74,12 @@ class UserController {
 
       res.cookie('jwt', token, cookieOptions);
 
-      // Remove the password from the output
-      user.password = undefined;
-
       return res.status(statusCode).json({
          status: 'success',
          token,
-         data: {
-            user
+         user: {
+            name: user.name,
+            email: user.email
          }
       });
    };
