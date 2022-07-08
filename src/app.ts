@@ -1,8 +1,9 @@
-import express, { Application } from 'express';
+import express, { Application, Request, Response, NextFunction } from 'express';
 import config from './config';
 import mongoConnect from './mongoConnection';
 import userRoutes from './routes/userRoutes';
 import todoRoutes from './routes/todoRoutes';
+import { AppError } from './utils/appError';
 
 const port = config.port || 4000;
 
@@ -36,6 +37,13 @@ app.use(express.json());
  */
 app.use('/users', userRoutes);
 app.use('/todos', todoRoutes);
+
+/**
+ * Route Not Found Handler
+ */
+app.all('*', (req: Request, _res: Response, next: NextFunction) => {
+   next(new AppError(`Can't find ${req.originalUrl} on this server!`, 404));
+});
 
 /**
  * Start Server
