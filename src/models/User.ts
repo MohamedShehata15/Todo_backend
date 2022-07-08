@@ -43,6 +43,18 @@ const userSchema = new mongoose.Schema<IUser>({
    passwordResetExpires: Date
 });
 
+// Password Checker
+userSchema.methods.correctPassword = async function (
+   candidatePassword: string,
+   userPassword: string
+): Promise<boolean> {
+   const result: boolean = await bcrypt.compare(
+      candidatePassword,
+      userPassword
+   );
+   return result;
+};
+
 const User = mongoose.model('User', userSchema);
 
 export default User;
