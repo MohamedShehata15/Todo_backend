@@ -1,11 +1,28 @@
 import bcrypt from 'bcrypt';
 import crypto from 'crypto';
-import mongoose from 'mongoose';
+import mongoose, { Types } from 'mongoose';
 import validator from 'validator';
 
-import IUser from '../interfaces/IUser';
+export type UserDocument = mongoose.Document & {
+   name: string;
+   email: string;
+   password: string;
+   passwordConfirmation: string | undefined;
+   todo: {
+      type: Types.ObjectId;
+      ref: string;
+   };
+   passwordChangedAt: Date;
+   passwordResetToken: string;
+   passwordResetExpires: Date;
 
-const userSchema = new mongoose.Schema<IUser>({
+   correctPassword: (
+      candidatePassword: string,
+      password: string
+   ) => Promise<boolean>;
+};
+
+const userSchema = new mongoose.Schema<UserDocument>({
    name: {
       type: String,
       required: [true, 'Please enter your name']
@@ -29,7 +46,8 @@ const userSchema = new mongoose.Schema<IUser>({
       minLength: 3,
       validate: {
          validator: function (el: string): boolean {
-            return el === (this as IUser).password;
+            const user = this as unknown as UserDocument;
+            return el === user.password;
          },
          message: "passwords don't match"
       }
@@ -41,6 +59,21 @@ const userSchema = new mongoose.Schema<IUser>({
    passwordChangedAt: Date,
    passwordResetToken: String,
    passwordResetExpires: Date
+});
+
+// Hash Password
+userSchema.pre('save', async function (next) {
+   const user = this as unknown as UserDocument;
+
+   if (!user.isModified('password')) return next();
+
+   // Has the password with cost of 12
+   user.password = await bcrypt.hash(user.password, 12);
+
+   // Delete the passwordConfirm Field
+   user.passwordConfirmation = undefined;
+
+   next();
 });
 
 // Password Checker
