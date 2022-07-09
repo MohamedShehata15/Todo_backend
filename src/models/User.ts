@@ -8,10 +8,10 @@ export type UserDocument = mongoose.Document & {
    email: string;
    password: string;
    passwordConfirmation: string | undefined;
-   todo: {
+   todos: {
       type: Types.ObjectId;
       ref: string;
-   };
+   }[];
    passwordChangedAt: Date;
    passwordResetToken: string;
    passwordResetExpires: Date;
@@ -54,10 +54,12 @@ const userSchema = new mongoose.Schema<UserDocument>({
          message: "passwords don't match"
       }
    },
-   todo: {
-      type: mongoose.Types.ObjectId,
-      ref: 'Todo'
-   },
+   todos: [
+      {
+         type: mongoose.Types.ObjectId,
+         ref: 'Todo'
+      }
+   ],
    passwordChangedAt: Date,
    passwordResetToken: String,
    passwordResetExpires: Date
