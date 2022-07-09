@@ -20,6 +20,8 @@ export type UserDocument = mongoose.Document & {
       candidatePassword: string,
       password: string
    ) => Promise<boolean>;
+
+   changedPasswordAfter: (timestamp: number) => boolean;
 };
 
 const userSchema = new mongoose.Schema<UserDocument>({
@@ -86,6 +88,21 @@ userSchema.methods.correctPassword = async function (
       userPassword
    );
    return result;
+};
+
+// Changed Password Checker
+userSchema.methods.changedPasswordAfter = function (
+   JWTTimestamp: number
+): boolean {
+   const user = this as unknown as UserDocument;
+
+   if (user.passwordChangedAt) {
+      const changedTimestamp: number = user.passwordChangedAt.getTime() / 1000;
+
+      return JWTTimestamp < changedTimestamp;
+   }
+
+   return false; // Password doesn't change
 };
 
 const User = mongoose.model('User', userSchema);
