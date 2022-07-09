@@ -38,8 +38,15 @@ const todoSchema = new mongoose.Schema<TodoDocument>({
          values: Object.values(Priority),
          message: 'Priority must be low, medium or high'
       },
-      default: Priority.Low,
       required: [true, 'Please enter the priority']
+   },
+   status: {
+      type: String,
+      required: [true, 'Please choose a status'],
+      enum: {
+         values: Object.values(Status),
+         message: 'Status must be one of the following: todo, in progress, done'
+      }
    },
    startDate: {
       type: Date,
@@ -53,15 +60,6 @@ const todoSchema = new mongoose.Schema<TodoDocument>({
             return el > (this as unknown as TodoDocument).startDate;
          },
          message: 'End date must be after start date'
-      },
-      status: {
-         type: String,
-         enum: {
-            values: Status,
-            message:
-               'Status must be one of the following: todo, in progress, done'
-         },
-         default: Status.todo
       }
    }
 });
