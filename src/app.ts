@@ -1,9 +1,11 @@
 import express, { Application, Request, Response, NextFunction } from 'express';
+
 import config from './config';
 import mongoConnect from './mongoConnection';
 import userRoutes from './routes/userRoutes';
 import todoRoutes from './routes/todoRoutes';
 import { AppError } from './utils/appError';
+import globalErrorHandler from './controllers/errorController';
 
 const port = config.port || 4000;
 
@@ -44,6 +46,12 @@ app.use('/todos', todoRoutes);
 app.all('*', (req: Request, _res: Response, next: NextFunction) => {
    next(new AppError(`Can't find ${req.originalUrl} on this server!`, 404));
 });
+
+/**
+ * Global Error Handler
+ */
+
+app.use(globalErrorHandler);
 
 /**
  * Start Server
