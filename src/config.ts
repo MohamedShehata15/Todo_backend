@@ -25,7 +25,8 @@ const {
 export default {
    env: NODE_ENV,
    port: PORT,
-   database: NODE_ENV === 'dev' ? DATABASE : DATABASE_TEST,
+   // database: NODE_ENV === 'dev' ? DATABASE : DATABASE_TEST,
+   database: DATABASE,
    databasePassword: DATABASE_PASSWORD,
    jwtSecret: JWT_SECRET,
    jwtExpiresIn: JWT_EXPIRES_IN,
