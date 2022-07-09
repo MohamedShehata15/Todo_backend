@@ -9,6 +9,6 @@ const todoRoutes: IRouter = Router();
 
 todoRoutes.use(new AuthController().protect);
 
-todoRoutes.route('/').post(todoController.add);
+todoRoutes.route('/').post(todoController.add).get(todoController.getAll);
 
 export default todoRoutes;
