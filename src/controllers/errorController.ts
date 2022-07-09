@@ -9,6 +9,11 @@ type ErrorType = Error & {
    isOperational: boolean;
    code: number;
    keyValue: { email: string };
+   errors: {
+      email?: {
+         message: string;
+      };
+   };
 };
 
 const sendErrorDev = (err: ErrorType, res: Response) => {
@@ -44,6 +49,13 @@ const handleDuplicateFieldDB = (err: ErrorType) => {
    return new AppError(message, 400);
 };
 
+const handleValidationError = (err: ErrorType) => {
+   const errors = Object.values(err.errors).map((el) => el.message);
+   const message = `Invalid input data ${errors.join('. ')}`;
+
+   return new AppError(message, 400);
+};
+
 export default (
    err: ErrorType,
    _req: Request,
@@ -60,6 +72,10 @@ export default (
 
       if (err.code === 11000) {
          error = handleDuplicateFieldDB(err);
+      }
+
+      if (err.name === 'ValidationError') {
+         error = handleValidationError(err);
       }
 
       sendErrorProd(error, res);
