@@ -1,8 +1,27 @@
 import mongoose from 'mongoose';
 
-import ITodo, { Priority, Status } from '../interfaces/ITodo';
+enum Priority {
+   Low = 'low',
+   Medium = 'medium',
+   High = 'high'
+}
 
-const todoSchema = new mongoose.Schema<ITodo>({
+enum Status {
+   todo = 'todo',
+   InProgress = 'in progress',
+   Done = 'done'
+}
+
+export type TodoDocument = mongoose.Document & {
+   title: string;
+   description: string;
+   priority: Priority;
+   status: Status;
+   startDate: Date;
+   endDate: Date;
+};
+
+const todoSchema = new mongoose.Schema<TodoDocument>({
    title: {
       type: String,
       required: [true, 'Please enter the title'],
@@ -31,7 +50,7 @@ const todoSchema = new mongoose.Schema<ITodo>({
       required: [true, 'Please enter an end date'],
       validate: {
          validator: function (el: Date): boolean {
-            return el > (this as unknown as ITodo).startDate;
+            return el > (this as unknown as TodoDocument).startDate;
          },
          message: 'End date must be after start date'
       },
@@ -42,7 +61,7 @@ const todoSchema = new mongoose.Schema<ITodo>({
             message:
                'Status must be one of the following: todo, in progress, done'
          },
-         default: Status.Todo
+         default: Status.todo
       }
    }
 });
