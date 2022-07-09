@@ -36,10 +36,6 @@ class UserController {
 
          const userPassword: string = user?.password ?? '';
 
-         console.log('########################################');
-         console.log(user);
-         console.log('###########################################');
-
          if (!user)
             return next(new AppError('Incorrect email or password', 401));
 
