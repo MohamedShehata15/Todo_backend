@@ -1,11 +1,27 @@
-import crypto from 'crypto';
-import jwt from 'jsonwebtoken';
+import { Request, Response, NextFunction } from 'express';
 
-import User from '../models/User';
-
+import Todo, { TodoDocument } from '../models/Todo';
+import catchAsync from '../utils/catchAsync';
 
 class TodoController {
-   // const signUp =  
+   add = catchAsync(
+      async (req: Request, res: Response, _next: NextFunction) => {
+         const todo: TodoDocument = await Todo.create(req.body);
+
+         res.status(201).json({
+            status: 'success',
+            todo
+         });
+      }
+   );
+
+   getAll = () => {};
+
+   getOne = () => {};
+
+   update = () => {};
+
+   delete = () => {};
 }
 
 export default TodoController;
