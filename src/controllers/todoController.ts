@@ -35,7 +35,16 @@ class TodoController {
       }
    );
 
-   getOne = () => {};
+   getOne = catchAsync(
+      async (req: UserRequest, res: Response, Next: NextFunction) => {
+         const todo = await Todo.findById(req.params.id);
+
+         res.status(200).json({
+            status: 'success',
+            todo
+         });
+      }
+   );
 
    update = () => {};
 

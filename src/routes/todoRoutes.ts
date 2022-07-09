@@ -11,4 +11,6 @@ todoRoutes.use(new AuthController().protect);
 
 todoRoutes.route('/').post(todoController.add).get(todoController.getAll);
 
+todoRoutes.route('/:id').get(todoController.getOne);
+
 export default todoRoutes;
