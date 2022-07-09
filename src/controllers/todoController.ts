@@ -48,7 +48,15 @@ class TodoController {
 
    update = () => {};
 
-   delete = () => {};
+   delete = catchAsync(
+      async (req: UserRequest, res: Response, _next: NextFunction) => {
+         await Todo.findByIdAndDelete(req.params.id);
+
+         res.status(204).json({
+            status: 'success'
+         });
+      }
+   );
 }
 
 export default TodoController;
