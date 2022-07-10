@@ -6,6 +6,7 @@ import userRoutes from './routes/userRoutes';
 import todoRoutes from './routes/todoRoutes';
 import { AppError } from './utils/appError';
 import globalErrorHandler from './controllers/errorController';
+import cors from 'cors';
 
 const port = config.port || 4000;
 
@@ -32,6 +33,7 @@ mongoConnect();
 /**
  * Middlewares
  */
+app.use(cors());
 app.use(express.json());
 
 /**
