@@ -40,6 +40,9 @@ class TodoController {
       async (req: UserRequest, res: Response, Next: NextFunction) => {
          const todo = await Todo.findById(req.params.id);
 
+         if (!todo)
+            return Next(new AppError('No todo found with that ID', 404));
+
          res.status(200).json({
             status: 'success',
             todo

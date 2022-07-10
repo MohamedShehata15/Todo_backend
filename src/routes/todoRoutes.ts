@@ -11,6 +11,9 @@ todoRoutes.use(new AuthController().protect);
 
 todoRoutes.route('/').post(todoController.add).get(todoController.getAll);
 
+// Restrict Routes for owner only
+todoRoutes.use(new AuthController().authorize);
+
 todoRoutes
    .route('/:id')
    .get(todoController.getOne)

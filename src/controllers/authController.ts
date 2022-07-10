@@ -60,6 +60,27 @@ class AuthController {
          next();
       }
    );
+
+   authorize = catchAsync(
+      async (req: UserRequest, res: Response, next: NextFunction) => {
+         const todoId = req.params.id;
+         const loggedUser = req.user;
+
+         let userTodo = loggedUser?.todos.some(
+            (todo) => todo.toString() === todoId
+         );
+
+         if (!userTodo)
+            return next(
+               new AppError(
+                  'You are not authorized to access this resource',
+                  401
+               )
+            );
+
+         next();
+      }
+   );
 }
 
 export default AuthController;
