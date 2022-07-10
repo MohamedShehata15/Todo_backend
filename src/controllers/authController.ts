@@ -13,7 +13,7 @@ import { sendMailTypes } from '../types/sendMail.types';
 
 class AuthController {
    signUp = catchAsync(
-      async (req: Request, res: Response, _next: NextFunction) => {
+      async (req: Request, res: Response, next: NextFunction) => {
          const newUser: UserDocument = await User.create({
             name: req.body.name,
             email: req.body.email,
@@ -21,7 +21,9 @@ class AuthController {
             passwordConfirmation: req.body.passwordConfirmation
          });
 
-         this.createSendToken(newUser, 201, res);
+         await this.emailVerification(newUser, req, res, next);
+
+         // this.createSendToken(newUser, 201, res);
       }
    );
 
@@ -159,6 +161,45 @@ class AuthController {
       }
    );
 
+   verifyEmail = catchAsync(
+      async (req: Request, res: Response, next: NextFunction) => {
+         // Get use based on token.
+         const hashedToken: string = crypto
+            .createHash('sha256')
+            .update(req.params.token)
+            .digest('hex');
+
+         const user: UserDocument | null = await User.findOne({
+            emailVerificationToken: hashedToken
+         });
+
+         // Check user exits and token is valid.
+         if (!user)
+            return next(new AppError('Token is invalid or has expired', 400));
+
+         // Update User Data
+         user.emailVerificationToken = undefined;
+         user.isEmailVerified = true;
+         await user.save({ validateBeforeSave: false });
+
+         // Send token
+         this.createSendToken(user, 200, res);
+      }
+   );
+
+   resentEmailVerification = catchAsync(
+      async (req: Request, res: Response, next: NextFunction) => {
+         const user: UserDocument | null = await User.findOne({
+            email: req.body.email
+         });
+
+         if (!user)
+            return next(new AppError('There is no user with this email', 404));
+
+         await this.emailVerification(user, req, res, next);
+      }
+   );
+
    private signToken = (id: Types.ObjectId) => {
       const dates = config.jwtExpiresIn;
       const jwtSecret: string = config.jwtSecret ?? '';
@@ -172,6 +213,46 @@ class AuthController {
             expiresIn: dates
          }
       );
+   };
+
+   private emailVerification = async (
+      user: UserDocument,
+      req: Request,
+      res: Response,
+      next: NextFunction
+   ) => {
+      // generate random token
+      const token = user?.createEmailVerificationToken();
+      await user.save({ validateBeforeSave: false });
+
+      // send token to user's email
+      const verifyUrl = `${req.protocol}://${req.get(
+         'host'
+      )}/users/email-verification/${token}`;
+
+      const message = `Verify Your Email: ${verifyUrl}`;
+
+      try {
+         const sendMailOptions: sendMailTypes = {
+            email: user.email,
+            subject: 'Your email verification token',
+            message
+         };
+         await sendEmail(sendMailOptions);
+      } catch (err) {
+         return next(
+            new AppError(
+               'There was an error sending the verification email. Please, try again later',
+               500
+            )
+         );
+      }
+
+      res.status(200).json({
+         status: 'success',
+         message:
+            'Please verify your email. check your spam if you do not see it'
+      });
    };
 }
 

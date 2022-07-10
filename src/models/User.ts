@@ -12,6 +12,8 @@ export type UserDocument = mongoose.Document & {
       type: Types.ObjectId;
       ref: string;
    }[];
+   isEmailVerified: boolean;
+   emailVerificationToken: string | undefined;
    passwordChangedAt: Date | undefined;
    passwordResetToken: string | undefined;
    passwordResetExpires: number | undefined;
@@ -24,6 +26,8 @@ export type UserDocument = mongoose.Document & {
    changedPasswordAfter: (timestamp: number) => boolean;
 
    createPasswordResetToken: () => string;
+
+   createEmailVerificationToken: () => string;
 };
 
 const userSchema = new mongoose.Schema<UserDocument>({
@@ -62,6 +66,11 @@ const userSchema = new mongoose.Schema<UserDocument>({
          ref: 'Todo'
       }
    ],
+   isEmailVerified: {
+      type: Boolean,
+      default: false
+   },
+   emailVerificationToken: String,
    passwordChangedAt: Date,
    passwordResetToken: String,
    passwordResetExpires: Number
@@ -124,6 +133,20 @@ userSchema.methods.createPasswordResetToken = function () {
    user.passwordResetExpires = Date.now() + 10 * 60 * 1000;
 
    return resetToken;
+};
+
+// Create Email Verification Token
+userSchema.methods.createEmailVerificationToken = function () {
+   const user = this as unknown as UserDocument;
+
+   const token = crypto.randomBytes(32).toString('hex');
+
+   user.emailVerificationToken = crypto
+      .createHash('sha256')
+      .update(token)
+      .digest('hex');
+
+   return token;
 };
 
 const User = mongoose.model('User', userSchema);

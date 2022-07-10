@@ -11,5 +11,10 @@ userRoutes.post('/login', authController.login);
 
 userRoutes.post('/forgot-password', authController.forgotPassword);
 userRoutes.patch('/reset-password/:token', authController.resetPassword);
+userRoutes.patch('/email-verification/:token', authController.verifyEmail);
+userRoutes.post(
+   '/resent-email-verification',
+   authController.resentEmailVerification
+);
 
 export default userRoutes;
