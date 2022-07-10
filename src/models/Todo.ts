@@ -50,7 +50,8 @@ const todoSchema = new mongoose.Schema<TodoDocument>({
    },
    startDate: {
       type: Date,
-      default: Date.now()
+      default: Date.now(),
+      immutable: true
    },
    endDate: {
       type: Date,
