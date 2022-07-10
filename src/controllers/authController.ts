@@ -1,3 +1,4 @@
+import crypto from 'crypto';
 import jwt from 'jsonwebtoken';
 import { Types } from 'mongoose';
 import { Request, Response, NextFunction } from 'express';
@@ -6,7 +7,9 @@ import User, { UserDocument } from '../models/User';
 import catchAsync from '../utils/catchAsync';
 import { AppError } from '../utils/appError';
 import config from '../config';
+import sendEmail from '../utils/email';
 import CookieOptionsTypes from './../types/cookieOptions.types';
+import { sendMailTypes } from '../types/sendMail.types';
 
 class AuthController {
    signUp = catchAsync(
@@ -78,6 +81,83 @@ class AuthController {
          }
       });
    };
+
+   forgotPassword = catchAsync(
+      async (req: Request, res: Response, next: NextFunction) => {
+         // get user based on email
+         const user: UserDocument | null = await User.findOne({
+            email: req.body.email
+         });
+
+         if (!user)
+            return next(new AppError('There is no user with this email', 404));
+
+         // generate random token
+         const resetToken = user?.createPasswordResetToken();
+         await user.save({ validateBeforeSave: false });
+
+         // send token to user's email
+         const resetUrl = `${req.protocol}://${req.get(
+            'host'
+         )}/users/reset-password/${resetToken}`;
+
+         const message = `Forget Your password: ${resetUrl}`;
+
+         try {
+            const sendMailOptions: sendMailTypes = {
+               email: user.email,
+               subject: 'Your password reset token (valid for 10 minutes)',
+               message
+            };
+            await sendEmail(sendMailOptions);
+         } catch (err) {
+            user.passwordResetToken = undefined;
+            user.passwordResetExpires = undefined;
+            await user.save({ validateBeforeSave: false });
+
+            return next(
+               new AppError(
+                  'There was an error sending the email. Please, try again later',
+                  500
+               )
+            );
+         }
+
+         res.status(200).json({
+            status: 'success',
+            message: 'Token sent to email. check your spam if you do not see it'
+         });
+      }
+   );
+
+   resetPassword = catchAsync(
+      async (req: Request, res: Response, next: NextFunction) => {
+         // Get use based on token.
+         const hashedToken: string = crypto
+            .createHash('sha256')
+            .update(req.params.token)
+            .digest('hex');
+
+         const user: UserDocument | null = await User.findOne({
+            passwordResetToken: hashedToken,
+            passwordResetExpires: { $gt: Date.now() }
+         });
+
+         // Check user exits and token is valid.
+         if (!user)
+            return next(new AppError('Token is invalid or has expired', 400));
+
+         // Update User Data
+         user.password = req.body.password;
+         user.passwordConfirmation = req.body.passwordConfirmation;
+         user.passwordResetToken = undefined;
+         user.passwordResetExpires = undefined;
+         await user.save();
+
+         // Send token
+         this.createSendToken(user, 200, res);
+      }
+   );
 
    private signToken = (id: Types.ObjectId) => {
       const dates = config.jwtExpiresIn;

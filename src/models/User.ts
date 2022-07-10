@@ -12,9 +12,9 @@ export type UserDocument = mongoose.Document & {
       type: Types.ObjectId;
       ref: string;
    }[];
-   passwordChangedAt: Date;
-   passwordResetToken: string;
-   passwordResetExpires: Date;
+   passwordChangedAt: Date | undefined;
+   passwordResetToken: string | undefined;
+   passwordResetExpires: number | undefined;
 
    correctPassword: (
       candidatePassword: string,
@@ -22,6 +22,8 @@ export type UserDocument = mongoose.Document & {
    ) => Promise<boolean>;
 
    changedPasswordAfter: (timestamp: number) => boolean;
+
+   createPasswordResetToken: () => string;
 };
 
 const userSchema = new mongoose.Schema<UserDocument>({
@@ -62,7 +64,7 @@ const userSchema = new mongoose.Schema<UserDocument>({
    ],
    passwordChangedAt: Date,
    passwordResetToken: String,
-   passwordResetExpires: Date
+   passwordResetExpires: Number
 });
 
 // Hash Password
@@ -89,6 +91,7 @@ userSchema.methods.correctPassword = async function (
       candidatePassword,
       userPassword
    );
+
    return result;
 };
 
@@ -105,6 +108,22 @@ userSchema.methods.changedPasswordAfter = function (
    }
 
    return false; // Password doesn't change
+};
+
+// Create Rest Password Token
+userSchema.methods.createPasswordResetToken = function () {
+   const user = this as unknown as UserDocument;
+
+   const resetToken = crypto.randomBytes(32).toString('hex');
+
+   user.passwordResetToken = crypto
+      .createHash('sha256')
+      .update(resetToken)
+      .digest('hex');
+
+   user.passwordResetExpires = Date.now() + 10 * 60 * 1000;
+
+   return resetToken;
 };
 
 const User = mongoose.model('User', userSchema);
