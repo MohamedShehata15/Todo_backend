@@ -68,7 +68,7 @@ export default (
    if (config.env === 'dev') {
       sendErrorDev(err, res);
    } else if (config.env === 'prod') {
-      let error: AppError = new AppError('Something went wrong!', 500);
+      let error: AppError | undefined = undefined;
 
       if (err.code === 11000) {
          error = handleDuplicateFieldDB(err);
@@ -78,6 +78,7 @@ export default (
          error = handleValidationError(err);
       }
 
-      sendErrorProd(error, res);
+      if (error) sendErrorProd(error, res);
+      else sendErrorProd(err, res);
    }
 };
