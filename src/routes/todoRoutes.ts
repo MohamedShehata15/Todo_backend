@@ -14,6 +14,7 @@ todoRoutes.route('/').post(todoController.add).get(todoController.getAll);
 todoRoutes
    .route('/:id')
    .get(todoController.getOne)
-   .delete(todoController.delete);
+   .delete(todoController.delete)
+   .patch(todoController.update);
 
 export default todoRoutes;
