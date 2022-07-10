@@ -1,86 +1,98 @@
-import { Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
+import { Types } from 'mongoose';
+import { Request, Response, NextFunction } from 'express';
 
-import User from '../models/User';
+import User, { UserDocument } from '../models/User';
 import catchAsync from '../utils/catchAsync';
 import { AppError } from '../utils/appError';
 import config from '../config';
-import { JwtPayload } from '../types/jwtPayload.types';
-import { UserRequest } from '../types/userRequest.types';
+import CookieOptionsTypes from './../types/cookieOptions.types';
 
 class AuthController {
-   protect = catchAsync(
-      async (req: UserRequest, _res: Response, next: NextFunction) => {
-         // Getting Token
-         let token: string | null = null;
+   signUp = catchAsync(
+      async (req: Request, res: Response, _next: NextFunction) => {
+         const newUser: UserDocument = await User.create({
+            name: req.body.name,
+            email: req.body.email,
+            password: req.body.password,
+            passwordConfirmation: req.body.passwordConfirmation
+         });
 
-         if (
-            req.headers.authorization &&
-            req.headers.authorization.startsWith('Bearer')
-         ) {
-            token = req.headers.authorization.split(' ')[1];
-         }
-
-         if (!token) {
-            return next(
-               new AppError(
-                  'You are not logged in! Please log in to get access',
-                  401
-               )
-            );
-         }
-
-         // Verification Token.
-         const jwtSecret: string = config.jwtSecret ?? '';
-         const decode = jwt.verify(token, jwtSecret) as JwtPayload;
-
-         // Check if user exists
-         const currentUser = await User.findById(decode.id);
-         if (!currentUser) {
-            return next(
-               new AppError(
-                  'The user belonging to this token does no longer exits',
-                  401
-               )
-            );
-         }
-
-         // issued token after password changed
-         if (currentUser.changedPasswordAfter(decode.iat)) {
-            return next(
-               new AppError(
-                  'User recently changed password! Please log in again',
-                  401
-               )
-            );
-         }
-
-         // Grant access to route
-         req.user = currentUser;
-         next();
+         this.createSendToken(newUser, 201, res);
       }
    );
 
-   authorize = catchAsync(
-      async (req: UserRequest, res: Response, next: NextFunction) => {
-         const todoId = req.params.id;
-         const loggedUser = req.user;
+   login = catchAsync(
+      async (req: Request, res: Response, next: NextFunction) => {
+         const { email, password } = req.body;
 
-         let userTodo = loggedUser?.todos.some(
-            (todo) => todo.toString() === todoId
-         );
+         if (!email || !password)
+            return next(new AppError('Please enter email and password!', 400));
 
-         if (!userTodo)
-            return next(
-               new AppError(
-                  'You are not authorized to access this resource',
-                  401
-               )
-            );
+         const user: UserDocument | null = await User.findOne({
+            email
+         }).select('+password');
 
-         next();
+         const userPassword: string = user?.password ?? '';
+
+         if (!user)
+            return next(new AppError('Incorrect email or password', 401));
+
+         const correct =
+            user?.correctPassword &&
+            (await user?.correctPassword(password, userPassword));
+
+         if (!correct)
+            return next(new AppError('Incorrect email or password', 401));
+
+         this.createSendToken(user, 200, res);
       }
    );
+
+   private createSendToken = (
+      user: UserDocument,
+      statusCode: number,
+      res: Response
+   ) => {
+      const token: string = this.signToken(user?._id);
+      const jwtCookieExpiresIn: number =
+         (config.jwtCookieExpiresIn as unknown as number) ?? 90;
+
+      const cookieOptions: CookieOptionsTypes = {
+         expires: new Date(
+            Date.now() + jwtCookieExpiresIn * 24 * 60 * 60 * 1000
+         ),
+         httpOnly: true
+      };
+
+      if (config.env === 'production') cookieOptions.secure = true;
+
+      res.cookie('jwt', token, cookieOptions);
+
+      return res.status(statusCode).json({
+         status: 'success',
+         token,
+         user: {
+            name: user.name,
+            email: user.email
+         }
+      });
+   };
+
+   private signToken = (id: Types.ObjectId) => {
+      const dates = config.jwtExpiresIn;
+      const jwtSecret: string = config.jwtSecret ?? '';
+
+      return jwt.sign(
+         {
+            id: id
+         },
+         jwtSecret,
+         {
+            expiresIn: dates
+         }
+      );
+   };
 }
 
 export default AuthController;

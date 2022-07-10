@@ -1,12 +1,12 @@
 import { Router, IRouter } from 'express';
 
-import UserController from '../controllers/userController';
+import AuthController from './../controllers/authController';
 
-const userController = new UserController();
+const authController = new AuthController();
 
 const userRoutes: IRouter = Router();
 
-userRoutes.post('/signup', userController.signUp);
-userRoutes.post('/login', userController.login);
+userRoutes.post('/signup', authController.signUp);
+userRoutes.post('/login', authController.login);
 
 export default userRoutes;
