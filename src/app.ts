@@ -7,7 +7,7 @@ import todoRoutes from './routes/todoRoutes';
 import { AppError } from './utils/appError';
 import globalErrorHandler from './controllers/errorController';
 import cors from 'cors';
-import { morgan } from 'morgan';
+import morgan from 'morgan';
 
 const port = config.port || 4000;
 
