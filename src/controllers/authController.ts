@@ -50,6 +50,9 @@ class AuthController {
          if (!correct)
             return next(new AppError('Incorrect email or password', 401));
 
+         if(!user.isEmailVerified)
+            return next(new AppError('Please verify your email', 401));
+
          this.createSendToken(user, 200, res);
       }
    );
