@@ -9,10 +9,13 @@ enum Priority {
 enum Status {
    todo = 'todo',
    InProgress = 'in progress',
-   Done = 'done'
+   Rework = 'rework',
+   UnderReview = 'under review',
+   completed = 'completed'
 }
 
 export type TodoDocument = mongoose.Document & {
+   todoId: number;
    title: string;
    description: string;
    priority: Priority;
@@ -22,6 +25,11 @@ export type TodoDocument = mongoose.Document & {
 };
 
 const todoSchema = new mongoose.Schema<TodoDocument>({
+   todoId: {
+      type: Number,
+      default: () => Date.now(),
+      immutable: true
+   },
    title: {
       type: String,
       required: [true, 'Please enter the title'],
@@ -45,7 +53,8 @@ const todoSchema = new mongoose.Schema<TodoDocument>({
       required: [true, 'Please choose a status'],
       enum: {
          values: Object.values(Status),
-         message: 'Status must be one of the following: todo, in progress, done'
+         message:
+            'Status must be one of the following: todo, in progress, under review, rework, completed'
       }
    },
    startDate: {
