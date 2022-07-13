@@ -19,7 +19,10 @@ const {
    // Mail Configuration
    EMAIL_USERNAME,
    EMAIL_PASSWORD,
-   EMAIL_HOST
+   EMAIL_HOST,
+
+   // Front End Server
+   FRONT_END_URL
 } = process.env;
 
 export default {
@@ -33,5 +36,6 @@ export default {
    jwtCookieExpiresIn: JWT_COOKIE_EXPIRES_IN,
    emailUsername: EMAIL_USERNAME,
    emailPassword: EMAIL_PASSWORD,
-   emailHost: EMAIL_HOST
+   emailHost: EMAIL_HOST,
+   frontendUrl: FRONT_END_URL
 };

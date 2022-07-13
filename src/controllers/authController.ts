@@ -50,7 +50,7 @@ class AuthController {
          if (!correct)
             return next(new AppError('Incorrect email or password', 401));
 
-         if(!user.isEmailVerified)
+         if (!user.isEmailVerified)
             return next(new AppError('Please verify your email', 401));
 
          this.createSendToken(user, 200, res);
@@ -102,9 +102,7 @@ class AuthController {
          await user.save({ validateBeforeSave: false });
 
          // send token to user's email
-         const resetUrl = `${req.protocol}://${req.get(
-            'host'
-         )}/users/reset-password/${resetToken}`;
+         const resetUrl = `${config.frontendUrl}/reset-password/${resetToken}`;
 
          const message = `Forget Your password: ${resetUrl}`;
 
@@ -229,9 +227,7 @@ class AuthController {
       await user.save({ validateBeforeSave: false });
 
       // send token to user's email
-      const verifyUrl = `${req.protocol}://${req.get(
-         'host'
-      )}/users/email-verification/${token}`;
+      const verifyUrl = `${config.frontendUrl}/email-verification/${token}`;
 
       const message = `Verify Your Email: ${verifyUrl}`;
 
